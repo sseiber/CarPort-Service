@@ -66,7 +66,7 @@ async function start() {
     server.log(['startup', 'info'], `🚀 Starting HAPI server instance...`);
     await server.start();
 
-    server.log(['startup', 'info'], `✅ LoopBox DomainProcessor Service started`);
+    server.log(['startup', 'info'], `✅ CarPort Service started`);
     server.log(['startup', 'info'], `🌎 ${server.info.uri}`);
     server.log(['startup', 'info'], ` > Hapi version: ${server.version}`);
     server.log(['startup', 'info'], ` > Plugins: [${Object.keys(server.registrations).join(', ')}]`);

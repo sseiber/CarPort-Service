@@ -4,6 +4,7 @@ import {
     badRequest as boom_badRequest
 } from '@hapi/boom';
 import { CarPortService } from '../services/carport';
+import { ICarPortServiceRequest } from '../types/carportTypes';
 
 export class CarPortRoutes extends RoutePlugin {
     @inject('carportService')
@@ -11,29 +12,25 @@ export class CarPortRoutes extends RoutePlugin {
 
     @route({
         method: 'POST',
-        path: '/api/v1/process/refine',
+        path: '/api/v1/process/control',
         options: {
-            tags: ['refine'],
-            description: 'Refine input'
+            tags: ['control'],
+            description: 'Control'
         }
     })
     public async postProcess(request: Request, h: ResponseToolkit): Promise<ResponseObject> {
-        const domainProcessorRequest = request.payload as any;
-        if (!domainProcessorRequest.loopBoxIntent) {
-            throw boom_badRequest('Expected input in request playload');
-        }
-
-        if (!domainProcessorRequest.context) {
-            throw boom_badRequest('Expected context in request payload');
+        const controlRequest = request.payload as ICarPortServiceRequest;
+        if (!controlRequest.action) {
+            throw boom_badRequest('Expected action field in request playload');
         }
 
         try {
-            const refinedInput = await this.carportService.control(domainProcessorRequest);
+            const controlResponse = await this.carportService.control(controlRequest);
 
-            return h.response(refinedInput).code(201);
+            return h.response(controlResponse).code(201);
         }
-        catch (error) {
-            throw boom_badRequest(error.message);
+        catch (ex) {
+            throw boom_badRequest(ex.message);
         }
     }
 }

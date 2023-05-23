@@ -1,5 +1,8 @@
 import { service, inject } from 'spryly';
 import { Server } from '@hapi/hapi';
+import { Gpio } from 'onoff';
+import { ICarPortServiceRequest, ICarPortServiceResponse } from '../types/carportTypes';
+import { sleep } from '../utils';
 
 const ModuleName = 'carportService';
 
@@ -12,23 +15,41 @@ export class CarPortService {
         this.server.log([ModuleName, 'info'], `${ModuleName} initialzation`);
     }
 
-    public async control(_domainProcessorRequest: any): Promise<any> {
+    public async control(controlRequest: ICarPortServiceRequest): Promise<ICarPortServiceResponse> {
+        const response: ICarPortServiceResponse = {
+            succeeded: true,
+            status: 201,
+            message: 'The request succeeded'
+        };
+
         try {
-            // await Promise.all(domainProcessorHandlers);
+            this.server.log([ModuleName, 'info'], `Accessing GPIO pin 17`);
 
-            return {
-                succeeded: true,
-                processorId: 'loopbox.domainprocessor.none'
-            };
-        }
-        catch (error) {
-            this.server.log([ModuleName, 'error'], 'Unexpected result');
+            const led = new Gpio(17, 'out');
 
-            // return default result
-            return {
-                succeeded: false,
-                processorId: 'loopbox.domainprocessor.none'
-            };
+            led.writeSync(Gpio.HIGH);
+            await sleep(1000);
+
+            led.writeSync(Gpio.LOW);
+            await sleep(1000);
+
+            led.writeSync(Gpio.HIGH);
+            await sleep(1000);
+
+            led.writeSync(Gpio.LOW);
+
+            led.unexport();
+
+            response.message = `The carport request for action ${controlRequest.action} succeeded`;
         }
+        catch (ex) {
+            response.succeeded = false;
+            response.status = 500;
+            response.message = `The carport request for action ${controlRequest.action} failed with exception: ${ex.message}`;
+
+            this.server.log([ModuleName, 'error'], response.message);
+        }
+
+        return response;
     }
 }
