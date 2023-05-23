@@ -1,9 +1,29 @@
+export enum CarPortStatus {
+    Unknown = 'unknown',
+    Open = 'open',
+    Closed = 'closed'
+}
+
+export interface ICarPortStatus {
+    status: CarPortStatus;
+}
+
+export enum CarPortAction {
+    Open = 'open',
+    Close = 'close',
+    Check = 'check'
+}
+
+export interface ICarPortAction {
+    action: CarPortAction;
+}
+
 export interface ICarPortServiceRequest {
-    action: string;
+    action: ICarPortAction;
 }
 
 export interface ICarPortServiceResponse {
     succeeded: boolean;
-    status: number;
     message: string;
+    status: CarPortStatus;
 }

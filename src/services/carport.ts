@@ -1,8 +1,7 @@
 import { service, inject } from 'spryly';
 import { Server } from '@hapi/hapi';
 import { Gpio } from 'onoff';
-import { ICarPortServiceRequest, ICarPortServiceResponse } from '../models/carportTypes';
-import { sleep } from '../utils';
+import { CarPortAction, CarPortStatus, ICarPortServiceRequest, ICarPortServiceResponse } from '../models/carportTypes';
 
 const ModuleName = 'carportService';
 
@@ -11,45 +10,103 @@ export class CarPortService {
     @inject('$server')
     private server: Server;
 
+    private led: Gpio;
+
     public async init(): Promise<void> {
         this.server.log([ModuleName, 'info'], `${ModuleName} initialzation`);
+
+        this.led = new Gpio(17, 'out');
     }
 
     public async control(controlRequest: ICarPortServiceRequest): Promise<ICarPortServiceResponse> {
         const response: ICarPortServiceResponse = {
             succeeded: true,
-            status: 201,
-            message: 'The request succeeded'
+            message: 'The request succeeded',
+            status: CarPortStatus.Unknown
         };
 
+        this.server.log([ModuleName, 'info'], `Carport request for action ${controlRequest.action} was received`);
+
         try {
-            this.server.log([ModuleName, 'info'], `Accessing GPIO pin 17`);
+            let message;
 
-            const led = new Gpio(17, 'out');
+            switch (controlRequest.action.action) {
+                case CarPortAction.Open:
+                    response.status = await this.open();
+                    break;
 
-            led.writeSync(Gpio.HIGH);
-            await sleep(1000);
+                case CarPortAction.Close:
+                    response.status = await this.close();
+                    break;
 
-            led.writeSync(Gpio.LOW);
-            await sleep(1000);
+                case CarPortAction.Check:
+                    response.status = await this.check();
+                    break;
 
-            led.writeSync(Gpio.HIGH);
-            await sleep(1000);
+                default:
+                    message = `Carport request for action ${controlRequest.action} is not recognized`;
+                    break;
+            }
 
-            led.writeSync(Gpio.LOW);
+            response.message = message || `Carport request for action ${controlRequest.action} was processed with status ${response.status}`;
 
-            led.unexport();
-
-            response.message = `The carport request for action ${controlRequest.action} succeeded`;
+            this.server.log([ModuleName, 'info'], response.message);
         }
         catch (ex) {
             response.succeeded = false;
-            response.status = 500;
-            response.message = `The carport request for action ${controlRequest.action} failed with exception: ${ex.message}`;
+            response.message = `Carport request for action ${controlRequest.action} failed with exception: ${ex.message}`;
 
             this.server.log([ModuleName, 'error'], response.message);
         }
 
         return response;
+    }
+
+    public async open(): Promise<CarPortStatus> {
+        let status = CarPortStatus.Unknown;
+
+        if (Gpio.accessible) {
+            this.server.log([ModuleName, 'info'], `Setting GPIO pin to HIGH`);
+            await this.led.write(Gpio.HIGH);
+
+            status = CarPortStatus.Open;
+        }
+        else {
+            this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
+        }
+
+        return status;
+    }
+
+    public async close(): Promise<CarPortStatus> {
+        let status = CarPortStatus.Unknown;
+
+        if (Gpio.accessible) {
+            this.server.log([ModuleName, 'info'], `Setting GPIO pin to LOW`);
+            await this.led.write(Gpio.LOW);
+
+            status = CarPortStatus.Closed;
+        }
+        else {
+            this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
+        }
+
+        return status;
+    }
+
+    public async check(): Promise<CarPortStatus> {
+        let status = CarPortStatus.Unknown;
+
+        if (Gpio.accessible) {
+            this.server.log([ModuleName, 'info'], `Reading GPIO value`);
+
+            const value = await this.led.read();
+            status = value === Gpio.HIGH ? CarPortStatus.Open : CarPortStatus.Closed;
+        }
+        else {
+            this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
+        }
+
+        return status;
     }
 }
