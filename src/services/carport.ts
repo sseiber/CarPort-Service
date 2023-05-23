@@ -1,7 +1,7 @@
 import { service, inject } from 'spryly';
 import { Server } from '@hapi/hapi';
 import { Gpio } from 'onoff';
-import { ICarPortServiceRequest, ICarPortServiceResponse } from '../types/carportTypes';
+import { ICarPortServiceRequest, ICarPortServiceResponse } from '../models/carportTypes';
 import { sleep } from '../utils';
 
 const ModuleName = 'carportService';

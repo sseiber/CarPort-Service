@@ -4,7 +4,7 @@ import {
     badRequest as boom_badRequest
 } from '@hapi/boom';
 import { CarPortService } from '../services/carport';
-import { ICarPortServiceRequest } from '../types/carportTypes';
+import { ICarPortServiceRequest } from '../models/carportTypes';
 
 export class CarPortRoutes extends RoutePlugin {
     @inject('carportService')
