@@ -25,7 +25,7 @@ export class CarPortService {
             status: CarPortStatus.Unknown
         };
 
-        this.server.log([ModuleName, 'info'], `Carport request for action ${controlRequest.action} was received`);
+        this.server.log([ModuleName, 'info'], `Carport request for action ${controlRequest.action.action} was received`);
 
         try {
             let message;
@@ -44,17 +44,17 @@ export class CarPortService {
                     break;
 
                 default:
-                    message = `Carport request for action ${controlRequest.action} is not recognized`;
+                    message = `Carport request for action ${controlRequest.action.action} is not recognized`;
                     break;
             }
 
-            response.message = message || `Carport request for action ${controlRequest.action} was processed with status ${response.status}`;
+            response.message = message || `Carport request for action ${controlRequest.action.action} was processed with status ${response.status}`;
 
             this.server.log([ModuleName, 'info'], response.message);
         }
         catch (ex) {
             response.succeeded = false;
-            response.message = `Carport request for action ${controlRequest.action} failed with exception: ${ex.message}`;
+            response.message = `Carport request for action ${controlRequest.action.action} failed with exception: ${ex.message}`;
 
             this.server.log([ModuleName, 'error'], response.message);
         }

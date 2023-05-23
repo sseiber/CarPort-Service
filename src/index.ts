@@ -1,7 +1,7 @@
 import { resolve as pathResolve } from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({
-    path: `${pathResolve(__dirname, '..', 'configs', process.env.NODE_ENV)}.env`
+    path: `${pathResolve(__dirname, '..', 'configs', 'local')}.env`
 });
 
 import { manifest } from './manifest';
