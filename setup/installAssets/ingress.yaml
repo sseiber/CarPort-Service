@@ -4,8 +4,7 @@ metadata:
   name: ingress
 spec:
   rules:
-  - host: "seiberhome.com"
-    http:
+  - http:
       paths:
       - pathType: Prefix
         path: "/"

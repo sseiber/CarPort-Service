@@ -7,11 +7,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - seiberhome.com
+    - 10.10.16.106
     secretName: tls-secret
   rules:
-  - host: "seiberhome.com"
-    http:
+  - http:
       paths:
       - pathType: Prefix
         path: "/"
