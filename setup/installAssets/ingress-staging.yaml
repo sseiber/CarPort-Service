@@ -16,6 +16,6 @@ spec:
         path: "/"
         backend:
           service:
-            name: rpi-gd-api-server-service
+            name: carport-server-service
             port:
               number: 80
