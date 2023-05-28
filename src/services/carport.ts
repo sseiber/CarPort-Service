@@ -8,12 +8,14 @@ import {
     ICarPortServiceResponse
 } from '../models/carportTypes';
 import { version, Chip, Line, available } from 'node-libgpiod';
+import { sleep } from '../utils';
 
 const ModuleName = 'carportService';
 
 interface IGarageControl {
     button: Line;
-    state: Line;
+    downState: Line;
+    upState: Line;
 }
 
 const enum GPIOState {
@@ -21,36 +23,27 @@ const enum GPIOState {
     HIGH = 1
 };
 
-const enum GPIOConfig {
-    Output = 0,
-    Input = 1
-};
-
 interface IGarageControllerSpec {
     buttonPin: number;
-    buttonPinConfig: GPIOConfig;
-    statePin: number;
-    statePinConfig: GPIOConfig;
+    downStatePin: number;
+    upStatePin: number;
 }
 
 const GarageControllersSpecs: IGarageControllerSpec[] = [
     {
         buttonPin: 16,
-        buttonPinConfig: GPIOConfig.Output,
-        statePin: 17,
-        statePinConfig: GPIOConfig.Input
+        downStatePin: 0,
+        upStatePin: 3
     },
     {
-        buttonPin: 22,
-        buttonPinConfig: GPIOConfig.Output,
-        statePin: 23,
-        statePinConfig: GPIOConfig.Input
+        buttonPin: 18,
+        downStatePin: 1,
+        upStatePin: 4
     },
     {
-        buttonPin: 24,
-        buttonPinConfig: GPIOConfig.Output,
-        statePin: 25,
-        statePinConfig: GPIOConfig.Input
+        buttonPin: 19,
+        downStatePin: 2,
+        upStatePin: 5
     },
 ]
 
@@ -75,18 +68,18 @@ export class CarPortService {
 
             for (const garageControllerSpec of GarageControllersSpecs) {
                 const button = new Line(this.bcm2835, garageControllerSpec.buttonPin);
-                garageControllerSpec.buttonPinConfig == GPIOConfig.Output
-                    ? button.requestOutputMode()
-                    : button.requestInputMode();
+                button.requestOutputMode();
 
-                const state = new Line(this.bcm2835, garageControllerSpec.statePin);
-                garageControllerSpec.statePinConfig == GPIOConfig.Output
-                    ? state.requestOutputMode()
-                    : state.requestInputMode();
+                const downState = new Line(this.bcm2835, garageControllerSpec.downStatePin);
+                downState.requestInputMode();
+
+                const upState = new Line(this.bcm2835, garageControllerSpec.upStatePin);
+                upState.requestInputMode();
 
                 this.garageControllers.push({
                     button,
-                    state
+                    downState,
+                    upState
                 });
             }
         }
@@ -108,6 +101,10 @@ export class CarPortService {
             let message;
 
             switch (controlRequest.action.action) {
+                case CarPortAction.Activate:
+                    response.status = await this.activate(controlRequest.garageDoorId);
+                    break;
+
                 case CarPortAction.Open:
                     response.status = await this.open(controlRequest.garageDoorId);
                     break;
@@ -139,15 +136,28 @@ export class CarPortService {
         return response;
     }
 
+    public async activate(garageDoorId: GarageDoorId): Promise<CarPortStatus> {
+        let status = CarPortStatus.Unknown;
+
+        if (this.gpioAvailable) {
+            await this.activateGarageDoorButton(garageDoorId);
+
+            status = CarPortStatus.Unknown;
+        }
+        else {
+            this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
+        }
+
+        return status;
+    }
+
     public async open(garageDoorId: GarageDoorId): Promise<CarPortStatus> {
         let status = CarPortStatus.Unknown;
 
         if (this.gpioAvailable) {
-            this.server.log([ModuleName, 'info'], `Setting GPIO pin to HIGH`);
+            await this.activateGarageDoorButton(garageDoorId);
 
-            this.garageControllers[garageDoorId].button.setValue(GPIOState.HIGH);
-
-            status = CarPortStatus.Open;
+            status = CarPortStatus.Unknown;
         }
         else {
             this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
@@ -160,11 +170,9 @@ export class CarPortService {
         let status = CarPortStatus.Unknown;
 
         if (this.gpioAvailable) {
-            this.server.log([ModuleName, 'info'], `Setting GPIO pin to LOW`);
+            await this.activateGarageDoorButton(garageDoorId);
 
-            this.garageControllers[garageDoorId].button.setValue(GPIOState.LOW);
-
-            status = CarPortStatus.Closed;
+            status = CarPortStatus.Unknown;
         }
         else {
             this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
@@ -179,14 +187,28 @@ export class CarPortService {
         if (this.gpioAvailable) {
             this.server.log([ModuleName, 'info'], `Reading GPIO value`);
 
-            const value = this.garageControllers[garageDoorId].button.getValue();
+            const value = this.garageControllers[garageDoorId].downState.getValue();
+            this.server.log([ModuleName, 'info'], `GPIO pin state: ${value}`);
 
-            status = value === GPIOState.HIGH ? CarPortStatus.Open : CarPortStatus.Closed;
+            status = value === GPIOState.HIGH ? CarPortStatus.Closed : CarPortStatus.Open;
         }
         else {
             this.server.log([ModuleName, 'info'], `GPIO access is unavailable`);
         }
 
         return status;
+    }
+
+    private async activateGarageDoorButton(garageDoorId: GarageDoorId): Promise<void> {
+        try {
+            this.server.log([ModuleName, 'info'], `Activating GPIO pin ${GarageControllersSpecs[garageDoorId].buttonPin} for garageDoorId ${garageDoorId}`);
+
+            this.garageControllers[garageDoorId].button.setValue(GPIOState.HIGH);
+            await sleep(500);
+            this.garageControllers[garageDoorId].button.setValue(GPIOState.LOW);
+        }
+        catch (ex) {
+            this.server.log([ModuleName, 'info'], `Error activating garage door button: ${ex.message}`);
+        }
     }
 }

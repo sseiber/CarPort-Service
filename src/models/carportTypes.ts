@@ -15,6 +15,7 @@ export interface ICarPortStatus {
 }
 
 export enum CarPortAction {
+    Activate = 'activate',
     Open = 'open',
     Close = 'close',
     Check = 'check'
