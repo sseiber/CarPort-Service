@@ -21,7 +21,7 @@ interface IGarageControl {
 const enum GPIOState {
     LOW = 0,
     HIGH = 1
-};
+}
 
 interface IGarageControllerSpec {
     buttonPin: number;
@@ -44,8 +44,8 @@ const GarageControllersSpecs: IGarageControllerSpec[] = [
         buttonPin: 19,
         downStatePin: 2,
         upStatePin: 5
-    },
-]
+    }
+];
 
 @service(ModuleName)
 export class CarPortService {
