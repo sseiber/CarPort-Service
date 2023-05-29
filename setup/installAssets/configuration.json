@@ -1,0 +1,23 @@
+[
+    {
+        "buttonPin": 16,
+        "downStatePin": 0,
+        "upStatePin": 3,
+        "buttonContactTimeMs": 300,
+        "doorCheckDelaySec": 20
+    },
+    {
+        "buttonPin": 18,
+        "downStatePin": 1,
+        "upStatePin": 4,
+        "buttonContactTimeMs": 300,
+        "doorCheckDelaySec": 20
+    },
+    {
+        "buttonPin": 19,
+        "downStatePin": 2,
+        "upStatePin": 5,
+        "buttonContactTimeMs": 300,
+        "doorCheckDelaySec": 20
+    }
+]

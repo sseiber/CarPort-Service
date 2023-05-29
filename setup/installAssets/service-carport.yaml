@@ -22,6 +22,33 @@ spec:
       - name: rpi-gd-acr-access
 ---
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rpi-gd-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Mi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/rpi-gd/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rpi-gd-claim
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Mi
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: carport-server-service

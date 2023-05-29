@@ -8,14 +8,17 @@ import {
     ICarPortServiceResponse
 } from '../models/carportTypes';
 import { version, Chip, Line, available } from 'node-libgpiod';
+import * as fse from 'fs-extra';
 import { sleep } from '../utils';
 
 const ModuleName = 'carportService';
 
-interface IGarageControl {
-    button: Line;
-    downState: Line;
-    upState: Line;
+interface IGarageControllerConfig {
+    buttonPin: number;
+    downStatePin: number;
+    upStatePin: number;
+    buttonContactTimeMs: number;
+    doorCheckDelaySec: number;
 }
 
 const enum GPIOState {
@@ -23,29 +26,11 @@ const enum GPIOState {
     HIGH = 1
 }
 
-interface IGarageControllerSpec {
-    buttonPin: number;
-    downStatePin: number;
-    upStatePin: number;
+interface IGarageControl {
+    button: Line;
+    downState: Line;
+    upState: Line;
 }
-
-const GarageControllersSpecs: IGarageControllerSpec[] = [
-    {
-        buttonPin: 16,
-        downStatePin: 0,
-        upStatePin: 3
-    },
-    {
-        buttonPin: 18,
-        downStatePin: 1,
-        upStatePin: 4
-    },
-    {
-        buttonPin: 19,
-        downStatePin: 2,
-        upStatePin: 5
-    }
-];
 
 @service(ModuleName)
 export class CarPortService {
@@ -54,6 +39,7 @@ export class CarPortService {
 
     private gpioAvailable: boolean;
     private bcm2835: Chip;
+    private garageControllerConfigs: IGarageControllerConfig[];
     private garageControllers: IGarageControl[];
 
     public async init(): Promise<void> {
@@ -66,7 +52,13 @@ export class CarPortService {
 
             this.bcm2835 = new Chip(0);
 
-            for (const garageControllerSpec of GarageControllersSpecs) {
+            this.server.log([ModuleName, 'info'], `Reading spec.json file`);
+            this.garageControllerConfigs = fse.readJSONSync('/rpi-gd/data/spec.json');
+
+            this.server.log([ModuleName, 'info'], `Garage controller configuration:\n${JSON.stringify(this.garageControllerConfigs)}\n`);
+
+            this.server.log([ModuleName, 'info'], `Initializing garage controller GPIO pins`);
+            for (const garageControllerSpec of this.garageControllerConfigs) {
                 const button = new Line(this.bcm2835, garageControllerSpec.buttonPin);
                 button.requestOutputMode();
 
@@ -201,7 +193,7 @@ export class CarPortService {
 
     private async activateGarageDoorButton(garageDoorId: GarageDoorId): Promise<void> {
         try {
-            this.server.log([ModuleName, 'info'], `Activating GPIO pin ${GarageControllersSpecs[garageDoorId].buttonPin} for garageDoorId ${garageDoorId}`);
+            this.server.log([ModuleName, 'info'], `Activating GPIO pin ${this.garageControllerConfigs[garageDoorId].buttonPin} for garageDoorId ${garageDoorId}`);
 
             this.garageControllers[garageDoorId].button.setValue(GPIOState.HIGH);
             await sleep(500);
