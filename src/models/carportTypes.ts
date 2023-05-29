@@ -21,13 +21,9 @@ export enum CarPortAction {
     Check = 'check'
 }
 
-export interface ICarPortAction {
-    action: CarPortAction;
-}
-
 export interface ICarPortServiceRequest {
     garageDoorId: GarageDoorId;
-    action: ICarPortAction;
+    action: CarPortAction;
 }
 
 export interface ICarPortServiceResponse {
