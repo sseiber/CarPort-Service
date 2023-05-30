@@ -182,13 +182,13 @@ export class CarPortService {
             const valueDown = this.garageControllers[garageDoorId].downState.getValue();
             this.server.log([ModuleName, 'info'], `GPIO pin state ${this.garageControllerConfigs[garageDoorId].downStatePin} has value ${valueDown}`);
 
-            const valueUp = this.garageControllers[garageDoorId].downState.getValue();
+            const valueUp = this.garageControllers[garageDoorId].upState.getValue();
             this.server.log([ModuleName, 'info'], `GPIO pin state ${this.garageControllerConfigs[garageDoorId].upStatePin} has value ${valueUp}`);
 
-            if (valueDown === GPIOState.HIGH) {
+            if (valueDown === GPIOState.LOW) {
                 status = CarPortStatus.Closed;
             }
-            else if (valueUp === GPIOState.HIGH) {
+            else if (valueUp === GPIOState.LOW) {
                 status = CarPortStatus.Open;
             }
         }
