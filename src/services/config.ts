@@ -14,7 +14,7 @@ export class ConfigService {
         this.server.log([ModuleName, 'info'], `${ModuleName} initialization`);
 
         dotenvConfig({
-            path: `${pathResolve(__dirname, '..', '..', 'configs', 'local')}.env`
+            path: `${pathResolve(__dirname, '..', '..', 'configs', 'envConfig')}.env`
         });
     }
 

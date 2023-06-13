@@ -8,7 +8,7 @@
 ## Install
   * Clone this repository
   * npm i
-  * create ./configs and place environment variables in a local.env file
+  * create ./configs and place environment variables in a envConfig.env file
   * Run (F5)
 
 ## Development

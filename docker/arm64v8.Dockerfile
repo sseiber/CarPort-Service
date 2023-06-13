@@ -9,14 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     node-gyp \
-#     && rm -rf /var/lib/apt/lists/*
-
-# RUN apt-get remove -y nodejs \
-#     && apt-get autoremove -y
-
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y --no-install-recommends  nodejs
 
